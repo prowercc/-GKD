@@ -1,0 +1,23 @@
+import { defineGkdApp } from '@gkd-kit/define';
+
+export default defineGkdApp({
+  id: '替换成 App 包名',
+  name: '替换成 App 名称',
+  groups: [
+    {
+      key: 0,
+      name: '开屏广告',
+      desc: '点击跳过',
+      fastQuery: true,
+      matchTime: 10000,
+      actionMaximum: 1,
+      resetMatch: 'app',
+      rules: [
+        {
+          matches: '[text*="跳过"][visibleToUser=true]',
+          snapshotUrls: 'https://i.gkd.li/i/替换成你的快照编号',
+        },
+      ],
+    },
+  ],
+});
