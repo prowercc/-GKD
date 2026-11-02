@@ -1,7 +1,6 @@
 import subscription from '../src/subscription';
-import { checkSubscription, checkApiVersion } from '@gkd-kit/tools';
+import { validateSubscription } from './validateSubscription';
 
-await checkApiVersion();
-checkSubscription(subscription);
+validateSubscription(subscription);
 
 export default subscription;

@@ -3,12 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "擦擦自用 GKD 订阅规则",
+  "description": "擦擦GKD：个人维护的 GKD 订阅规则",
+  "homepage": "https://github.com/prowercc/-GKD",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prowercc/-GKD.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prowercc/-GKD/issues"
+  },
+  "gkd": {
+    "outDir": "dist",
+    "file": "gkd.json5",
+    "versionFile": "gkd.version.json5",
+    "changelog": "CHANGELOG.md",
+    "readme": "README.md"
+  },
   "scripts": {
     "postinstall": "simple-git-hooks",
-    "format": "prettier --cache --write ./**/*.{js,cjs,mjs,ts,jsx,tsx,json,md}",
+    "format": "prettier --cache --write ./**/*.{js,cjs,mjs,ts,jsx,tsx,json,md,yml,yaml}",
     "lint": "eslint --cache --fix ./**/*.{js,cjs,mjs,ts,jsx,tsx}",
     "check": "tsc --noEmit && tsx ./scripts/check.ts",
+    "check:api": "tsx ./scripts/checkApiVersion.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "format:check": "prettier --check ./**/*.{js,cjs,mjs,ts,jsx,tsx,json,md,yml,yaml}",
+    "lint:check": "eslint ./**/*.{js,cjs,mjs,ts,jsx,tsx}",
     "build": "tsc --noEmit && tsx ./scripts/build.ts"
   },
   "simple-git-hooks": {
@@ -46,6 +65,6 @@
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

@@ -1,4 +1,4 @@
-name: Build
+name: Build and publish
 
 on:
   push:
@@ -7,17 +7,62 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: subscription-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
+          node-version-file: .node-version
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
+      - run: pnpm test
+      - run: pnpm run lint:check
+      - run: pnpm run format:check
       - run: pnpm run build
+
+  publish:
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Publish subscription files
+        run: |
+          git add -- dist
+          if ! git diff --cached --quiet; then
+            version=$(node -e "import('@gkd-kit/tools').then(m => m.stdoutGkdVersion())")
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "chore: publish subscription v${version}"
+            git push origin HEAD:main
+          fi
+      - name: Create release if missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -e "import('@gkd-kit/tools').then(m => m.stdoutGkdVersion())")
+          if ! gh release view "v${version}" > /dev/null 2>&1; then
+            gh release create "v${version}" dist/gkd.json5 dist/gkd.version.json5 \
+              --target "$(git rev-parse HEAD)" --title "擦擦GKD v${version}" \
+              --notes-file dist/CHANGELOG.md
+          fi

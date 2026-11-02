@@ -1,0 +1,49 @@
+name: 规则失效或误触
+description: 反馈已有规则无法触发、误触或重复点击
+title: '[规则问题] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请提供 GKD 快照 ZIP 或审查分享链接，普通截图通常不足以定位控件。
+        公开提交前检查快照图片与节点文字中的个人信息。多步流程请分别捕获各步骤。
+  - type: input
+    id: app
+    attributes:
+      label: 应用名称与版本
+      placeholder: 应用名称、版本号；知道包名时也请填写
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: GKD 版本与手机系统
+      placeholder: GKD 版本、Android/系统版本
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: 订阅版本与规则组
+      placeholder: 擦擦GKD 版本、应用内对应的规则组名称
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 复现步骤与当前表现
+      description: 说明如何进入故障页面，以及没有触发、误触或重复点击的具体表现。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 希望执行的操作
+      description: 指明需要点击的按钮和预期结果。
+    validations:
+      required: true
+  - type: textarea
+    id: snapshots
+    attributes:
+      label: 快照与正常页面反例
+      description: 拖入快照 ZIP，或填写 https://i.gkd.li/i/ 开头的分享链接；误触时也提供被误点页面。
+    validations:
+      required: true

@@ -1,21 +1,23 @@
 import { defineGkdApp } from '@gkd-kit/define';
 
 export default defineGkdApp({
-  id: '替换成 App 包名',
-  name: '替换成 App 名称',
+  id: 'com.example.app', // 替换为真实包名，文件名也使用该包名
+  name: '替换为应用名称',
   groups: [
     {
       key: 0,
       name: '开屏广告',
       desc: '点击跳过',
       fastQuery: true,
+      activityIds: '.SplashActivity', // 替换为快照中的页面
       matchTime: 10000,
       actionMaximum: 1,
       resetMatch: 'app',
       rules: [
         {
-          matches: '[text*="跳过"][visibleToUser=true]',
-          snapshotUrls: 'https://i.gkd.li/i/替换成你的快照编号',
+          key: 0,
+          matches: '[vid="替换为实际控件ID"][visibleToUser=true]',
+          snapshotUrls: 'https://i.gkd.li/i/替换为真实快照编号',
         },
       ],
     },
