@@ -1,71 +1,54 @@
-# GKD 规则编写入门
+# 编写和修复规则
 
-这份文档的目标不是一次学完全部语法，而是让你能从一个真实弹窗开始，写出一条自己看得懂、以后能维护的规则。
+擦擦GKD 按应用维护规则。开始前先获取故障快照，并检查 `src/apps/` 是否已有对应包名的文件。
 
-## 1. 先拿到快照
+## 1. 获取可审查的页面证据
 
-在手机 GKD 里打开快照/审查工具，对准你想处理的界面生成快照链接。
+在 GKD 开启无障碍服务，使用“捕获快照”保存故障页面。快照包含截图、应用/页面信息和节点树。
 
-快照链接通常长这样：
+可以提供快照 ZIP，或通过审查工具的分享功能生成 `/i/` 形式的链接。`/snapshot/` 是当前浏览器的本地地址，其他人无法使用。公开分享前检查截图和节点文字中的个人信息。
 
-```txt
-https://i.gkd.li/i/12345678
-```
+多步关闭流程分别保存各步骤；同时保存容易误触的正常页面。详见 [官方快照说明](https://gkd.li/guide/snapshot)。
 
-写规则前先问自己三件事：
+## 2. 定位目标和上下文
 
-- 我想点哪个按钮？
-- 这个按钮有什么稳定特征？例如 `text`、`desc`、`vid`。
-- 这个界面有没有相似按钮，可能误点吗？
+在 [审查工具](https://i.gkd.li/) 中查看目标的 `id`、`vid`、`text`、`desc`、可见状态和相邻节点。
 
-## 2. 找最稳定的目标
+优先使用经过快照确认、足以区分目标的属性。单一文字在多个页面出现时，应结合页面或周边节点收窄范围。长层级关系、宽泛文字和固定坐标需要更多反例验证。
 
-优先级大致是：
+例如，下面只是选择器语法示意，属性值必须替换为实际快照中的内容：
 
-1. `vid`：控件资源 id，通常最稳定。
-2. `text`：按钮文字，例如“跳过”“关闭”“暂不”。
-3. `desc`：无障碍描述，例如“关闭”。
-4. 位置和结构关系：最后再用，因为版本变化时更容易失效。
-
-常见选择器：
-
-```txt
-[text="跳过"]
-[text*="跳过"]
-[desc="关闭"]
-[vid="iv_close"]
+```text
+[vid="splash_skip"][visibleToUser=true]
 [text="暂不更新"][visibleToUser=true]
 ```
 
-## 3. 新建一个 App 规则文件
+## 3. 编辑应用文件
 
-例如要给知乎写规则，新建：
+已有应用继续编辑原文件；新应用以完整包名命名，例如 `src/apps/com.example.app.ts`，并确保文件名与导出的 `id` 一致。
 
-```txt
-src/apps/zhihu.ts
-```
-
-起步模板：
+下面是结构示例，`com.example.app`、页面名、控件 ID 和快照地址都是占位内容，不能直接作为已适配规则使用：
 
 ```ts
 import { defineGkdApp } from '@gkd-kit/define';
 
 export default defineGkdApp({
-  id: 'com.zhihu.android',
-  name: '知乎',
+  id: 'com.example.app',
+  name: '示例应用',
   groups: [
     {
       key: 0,
       name: '开屏广告',
-      desc: '点击跳过',
       fastQuery: true,
+      activityIds: '.SplashActivity',
       matchTime: 10000,
       actionMaximum: 1,
       resetMatch: 'app',
       rules: [
         {
-          matches: '[text*="跳过"][visibleToUser=true]',
-          snapshotUrls: 'https://i.gkd.li/i/替换成你的快照编号',
+          key: 0,
+          matches: '[vid="splash_skip"][visibleToUser=true]',
+          snapshotUrls: 'https://i.gkd.li/i/替换为真实快照编号',
         },
       ],
     },
@@ -73,47 +56,38 @@ export default defineGkdApp({
 });
 ```
 
-## 4. 先检查，再构建
+可复制 [规则模板](app-rule-template.ts.txt) 起步。新增 group key 应在该应用内唯一，rule key 应在该规则组内唯一；修复旧规则时保留已有标识。
 
-```powershell
-pnpm run check
-pnpm run build
-```
+规则组名称使用 `src/categories.ts` 中的类别名称，或采用“类别名称-具体场景”，例如“全屏广告-首页活动弹窗”。
 
-`check` 通过后，再把 `dist/gkd.json5` 推到 GitHub。手机订阅链接就会读到新版本。
+## 4. 了解关键字段
 
-## 5. 常见规则字段
+| 字段                                   | 用途                                               |
+| -------------------------------------- | -------------------------------------------------- |
+| `activityIds` / `excludeActivityIds`   | 限定或排除页面；页面条件也需要随应用更新检查       |
+| `matches`                              | 所有选择器都须匹配，动作作用于最后一个选择器的目标 |
+| `anyMatches`                           | 一组替代匹配条件                                   |
+| `excludeMatches` / `excludeAllMatches` | 排除可能误触的场景                                 |
+| `preKeys`                              | 让多步操作按前置规则的执行顺序触发                 |
+| `matchTime` / `actionMaximum`          | 控制匹配时间与执行次数                             |
+| `actionCd` / `resetMatch`              | 控制执行间隔与规则状态重置                         |
+| `snapshotUrls`                         | 保存规则依据，方便后续排查                         |
 
-- `id`：Android 包名，例如 `com.zhihu.android`。
-- `name`：App 名。
-- `groups`：规则组列表。
-- `key`：同一个 App 内唯一编号，从 0 开始。
-- `name`：规则组名称，建议写清楚场景。
-- `rules`：真正的匹配规则。
-- `matches`：选择器，决定匹配哪个节点。
-- `snapshotUrls`：快照链接，必须留。
-- `fastQuery`：常用优化，适合简单选择器。
-- `matchTime`：进入界面后持续匹配多久，单位毫秒。
-- `actionMaximum`：最多执行几次，防止重复点击。
-- `resetMatch`：常用 `app`，切换 App 后重置匹配状态。
+`matches`、`anyMatches` 等都不是点击步骤列表；多步动作使用独立规则和 `preKeys`。完整语义以 [GKD API](https://gkd.li/api/) 为准。
 
-## 6. 少写全局规则
+## 5. 验证与提交
 
-全局规则会跨 App 生效，容易误触。个人订阅建议优先写 App 规则，只有非常确定的通用场景再放到 `src/globalGroups.ts`。
+1. 在快照中确认命中目标，并在正常页面反例中确认不会误触。
+2. 手机临时测试，检查点击效果、执行次数和前后页面。
+3. 运行 `pnpm run check`、`pnpm test`、Lint、格式检查和构建。
+4. 提交源码和必要说明；在 PR 中写清触发场景、修改原因、应用版本和真机结果。
+5. 等待合并和自动发布，手机刷新后复验。
 
-## 7. 调试顺序
+仅能在审查工具匹配到节点时，还需排查实时事件范围、页面限制、延迟和规则休眠状态。全局规则影响多个应用，应提供覆盖面更广的正反例，并先考虑是否能用应用规则解决。
 
-1. 先写最简单选择器。
-2. 跑 `pnpm run check`。
-3. 跑 `pnpm run build`。
-4. 推送到 GitHub。
-5. 手机 GKD 下拉更新订阅。
-6. 看是否触发。
-7. 如果误触，加更严格条件，例如 `activityIds`、父子关系、`visibleToUser=true`。
+## 参考
 
-## 8. 参考资料
-
-- 订阅规则：https://gkd.li/guide/subscription
-- API 文档：https://gkd.li/api/
-- 选择器语法：https://gkd.li/guide/selector
-- 查询优化：https://gkd.li/guide/selector/query
+- [订阅格式](https://gkd.li/guide/subscription)
+- [API 字段](https://gkd.li/api/)
+- [选择器语法](https://gkd.li/guide/selector)
+- [查询优化](https://gkd.li/guide/selector/query)

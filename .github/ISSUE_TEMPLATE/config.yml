@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 规则编写与修复说明
+    url: https://github.com/prowercc/-GKD/blob/main/docs/WRITING_RULES.md
+    about: 查看快照获取、应用文件命名和验证流程

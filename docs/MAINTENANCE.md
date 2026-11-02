@@ -1,57 +1,69 @@
-# 日常维护流程
+# 维护、发布与回退
 
-## 新增一条规则
+本文件说明擦擦GKD（`prowercc/-GKD`）的日常维护方式。手机读取的是 `dist/gkd.json5`，规则源码在 `src/`。
 
-1. 手机生成快照链接。
-2. 在 `src/apps/` 新建或编辑对应 App 文件。
-3. 写规则，保留 `snapshotUrls`。
-4. 本地检查：
+## 修复一条失效规则
+
+1. 记录应用、GKD、手机系统版本，复现问题并确认对应规则组已启用。
+2. 捕获故障页面快照。多步操作分别捕获；准备容易误触的正常页面作为反例。
+3. 找到 `src/apps/包名.ts`，比较新版控件 ID、文字、页面、层级和触发时机。
+4. 修改该应用规则，在审查工具检查目标与反例，再进行手机测试。
+5. 运行本地检查，提交到分支并创建 PR；通过校验后合入 `main`。
+6. 等待 [Build and publish](https://github.com/prowercc/-GKD/actions/workflows/build.yml) 成功，手机刷新订阅并再次确认。
+
+已有应用文件应继续维护，避免新建同包名规则或覆盖整份文件。保留规则组和规则已有 key 的含义。
+
+## 开发命令
+
+使用 `.node-version` 指定的 Node.js 24，pnpm 版本见 `package.json`。
 
 ```powershell
+pnpm install --frozen-lockfile
 pnpm run check
-```
-
-5. 构建订阅：
-
-```powershell
+pnpm test
+pnpm run lint:check
+pnpm run format:check
 pnpm run build
 ```
 
-6. 提交并推送：
+`format`、`lint` 会修改文件；提交前检查 diff。`check:api` 是单独的在线依赖版本检查，不参与必要的规则校验和构建。
 
-```powershell
-git add .
-git commit -m "feat: add app rule"
-git push
-```
+## 自动发布
 
-7. 手机 GKD 下拉更新订阅。
+工作流在 PR、`main` 提交及手动触发时运行：
 
-## 修改已有规则
+| 阶段    | 工作                                                                |
+| ------- | ------------------------------------------------------------------- |
+| 校验    | 安装锁定依赖，运行类型/规则检查、回归测试、Lint、格式检查和构建     |
+| 发布    | 校验成功后，仅在 `main` 重新构建；内容变化时更新 `dist/` 并递增版本 |
+| Release | 为生成的订阅版本创建发布记录，附上完整订阅与版本文件                |
 
-1. 找到对应 `src/apps/*.ts`。
-2. 添加新的快照到 `snapshotUrls`。
-3. 优先让选择器更稳，不要为了“能触发”无限放宽。
-4. 跑检查和构建。
+- PR 只校验，不发布。工作流限制同一分支并发，回写不使用强制推送。
+- 日常提交规则源码和相关说明，由服务器生成发布文件。
+- 仅文档变化或订阅内容未变化时，不增加订阅版本。
+- 手动重新运行可补建缺失的 Release；正常发布使用仓库自带的 GITHUB_TOKEN 和 `contents: write` 权限。
+- 当前订阅通过 GitHub Raw 提供，无需 npm 发布账号。
 
-## 版本文件
+`dist/` 是生成目录，不参与手工格式检查。文件应由构建生成，避免只编辑压缩后的 JSON5。`docs/upstream-apps.txt` 记录首次导入的应用文件清单，供溯源使用。
 
-构建会生成：
+## 发布失败时
 
-- `dist/gkd.json5`
-- `dist/gkd.version.json5`
-- `dist/CHANGELOG.md`
-- `dist/README.md`
+先查看 Actions 中失败的步骤。安装阶段检查 Node/pnpm 与锁文件；规则校验阶段按报错中的应用、规则组和字段定位；推送或 Release 阶段检查仓库令牌权限、分支保护和远端是否已有更新。
 
-这些文件需要一起提交。GKD 订阅读取 `dist/gkd.json5`。
+修复后重新运行工作流，并核对：
 
-## 如果 hook 找不到 pnpm
+- 完整订阅与版本文件的 ID、版本一致。
+- Release 指向本仓库提交，两个订阅文件均可访问。
+- 手机刷新后显示新版本，并实际触发目标规则。
 
-先激活 Cursor 里的本地环境：
+## 误触与回退
 
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-& C:\Users\caca\Desktop\Cursor\EnvConfig\activate.ps1
-```
+先在手机停用误触规则，再修复或回退源码并发布更高版本。把远端版本降回旧值不会被手机识别为更新。
 
-然后重新执行 Git 命令。
+本订阅 ID 固定为 `20260418`。重新编号会改变订阅身份，正常维护过程中保持不变。
+
+## 校验的边界
+
+自动检查覆盖类型、重复标识、四种选择器字段的语法和部分快照链接格式。回归测试验证维护工具，不会自动下载全部历史快照，也没有替代真机点击验证。
+
+“检查通过”与“当前手机有效”需要分别确认。应用升级或广告样式变化后，依据新版快照修复对应规则。
