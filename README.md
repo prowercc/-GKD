@@ -4,7 +4,9 @@
 
 个人维护的 [GKD](https://gkd.li/) 订阅规则，用于在指定应用和页面执行跳过开屏、关闭广告弹窗等操作。维护重点是根据真实页面快照修复失效规则，并通过 GitHub 自动发布更新。
 
-本项目以 [AIsouler/GKD_subscription](https://github.com/AIsouler/GKD_subscription) 的归档规则为基础，首次导入 **886 个应用、2074 个应用规则组、3 个全局规则组**。历史规则尚未逐项验证对当前应用版本的适用性；源码、校验和发布流程由本仓库继续维护。
+本项目从 [AIsouler/GKD_subscription](https://github.com/AIsouler/GKD_subscription) 的归档版本迁入 **886 个应用、2074 个应用规则组、3 个全局规则组**。
+
+**当前版本沿用原项目的规则及默认开关，尚未修复具体应用的失效规则。** 已完成的改动包括校验工具修复、自动构建发布和维护文档。后续根据失效页面快照逐条修复规则，并在真机确认后发布。
 
 ## 添加订阅
 
@@ -16,13 +18,9 @@ https://raw.githubusercontent.com/prowercc/-GKD/main/dist/gkd.json5
 
 [打开订阅文件](https://raw.githubusercontent.com/prowercc/-GKD/main/dist/gkd.json5) · [版本检查文件](https://raw.githubusercontent.com/prowercc/-GKD/main/dist/gkd.version.json5) · [最新发布](https://github.com/prowercc/-GKD/releases/latest)
 
-- 订阅名称：**擦擦GKD**
-- 维护账号：**prowercc**
-- 订阅 ID：`20260418`，发布后保持稳定。
-- 默认仅开启“开屏广告”类别，其余类别按需手动启用。
-- 从原订阅迁移时，添加本订阅后按需停用旧订阅，避免同一页面重复执行。原订阅的规则开关需要自行核对。
+添加后按需启用规则。从原订阅迁移时，核对已有开关，并按需停用旧订阅，避免同一页面重复执行。
 
-当前适配范围和版本以 [应用列表](dist/README.md) 与 [Release](https://github.com/prowercc/-GKD/releases) 为准。手机 GKD 刷新订阅后，只有远端版本高于本地版本才会更新。
+包含的规则见 [应用列表](dist/README.md)，版本记录见 [Release](https://github.com/prowercc/-GKD/releases)。手机 GKD 刷新订阅后，只有远端版本高于本地版本才会更新。
 
 ## 规则失效时怎样反馈
 
