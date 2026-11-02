@@ -1,57 +1,48 @@
-# 日常维护流程
+# 日常维护与发布
 
-## 新增一条规则
+## 修复流程
 
-1. 手机生成快照链接。
-2. 在 `src/apps/` 新建或编辑对应 App 文件。
-3. 写规则，保留 `snapshotUrls`。
-4. 本地检查：
+1. 提供应用名和版本、GKD 版本、手机系统、具体故障和对应规则组。
+2. 在失效页面捕获 GKD 快照。多步操作需分别抓取；保存容易误触的正常页面作为反例。
+3. 编辑 `src/apps/包名.ts`，比较控件属性、页面、版本条件和触发时机。已有 group/rule key 保持稳定。
+4. 在审查工具验证正例和反例，手机测试成功后运行校验和测试。
+5. 提交到分支，PR 进行校验；合并或直接提交到 main 会自动发布。
+6. 等待 [Build and publish](https://github.com/prowercc/-GKD/actions/workflows/build.yml) 成功，再在手机刷新订阅并确认。
+
+## 自动发布如何工作
+
+- 校验阶段：安装锁定依赖、类型与规则检查、11 项回归测试、Lint、格式检查、构建。
+- 发布阶段：只在 main 运行，以构建产物与已有订阅比较，内容改变时递增版本。
+- 将 `dist/` 回写 main，创建对应的 GitHub Release，附上订阅和版本文件。
+- 内容未改变时不会增加版本；Release 缺失时可用手动运行重试补建。
+- PR 不写入远程，也不创建 Release；工作流限制同一分支并发，推送不使用 force。
+- 在工作流页面的 Run workflow 可以手动重试。初期无需 npm 账号或 npm Token。
+
+发布阶段使用仓库自带 GITHUB_TOKEN，仅授予 contents: write；组织策略或分支保护可能需要仓库管理员进一步配置。
+
+## 本地命令
 
 ```powershell
+pnpm install --frozen-lockfile
 pnpm run check
-```
-
-5. 构建订阅：
-
-```powershell
+pnpm test
+pnpm run lint:check
+pnpm run format:check
 pnpm run build
 ```
 
-6. 提交并推送：
+`pnpm run format` 和 `pnpm run lint` 会修改文件。提交前检查 diff，避免把与本次修复无关的更改一起提交。
 
-```powershell
-git add .
-git commit -m "feat: add app rule"
-git push
-```
+正常只需提交规则源码和相关说明，服务器负责更新 `dist/gkd.json5`、`dist/gkd.version.json5`、变更记录与适配应用列表。本地构建用于验证，需要手工发布时应一起提交这些生成文件。
 
-7. 手机 GKD 下拉更新订阅。
+## 校验的边界
 
-## 修改已有规则
+语法正确不等于手机上有效。现有检查覆盖四种选择器字段和部分链接格式，未自动下载全部历史快照进行匹配回归，也未覆盖不同手机版本的实际点击行为。
 
-1. 找到对应 `src/apps/*.ts`。
-2. 添加新的快照到 `snapshotUrls`。
-3. 优先让选择器更稳，不要为了“能触发”无限放宽。
-4. 跑检查和构建。
+自动化能检查代码并发布，无法仅凭应用更新通知自动推断新按钮的位置。新增规则必须来自真实页面证据。
 
-## 版本文件
+## 误触与回退
 
-构建会生成：
+先停用误触规则，再修复或回退源码并发布更高版本。直接把远端版本降低，手机不会将其识别为更新。
 
-- `dist/gkd.json5`
-- `dist/gkd.version.json5`
-- `dist/CHANGELOG.md`
-- `dist/README.md`
-
-这些文件需要一起提交。GKD 订阅读取 `dist/gkd.json5`。
-
-## 如果 hook 找不到 pnpm
-
-先激活 Cursor 里的本地环境：
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-& C:\Users\caca\Desktop\Cursor\EnvConfig\activate.ps1
-```
-
-然后重新执行 Git 命令。
+使用独立订阅 ID 20260418；不要在后续发布中随意更改这个 ID。原订阅 666 的开关设置不会自动迁移。

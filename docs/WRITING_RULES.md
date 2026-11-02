@@ -42,7 +42,7 @@ https://i.gkd.li/i/12345678
 例如要给知乎写规则，新建：
 
 ```txt
-src/apps/zhihu.ts
+src/apps/com.zhihu.android.ts
 ```
 
 起步模板：
@@ -80,14 +80,14 @@ pnpm run check
 pnpm run build
 ```
 
-`check` 通过后，再把 `dist/gkd.json5` 推到 GitHub。手机订阅链接就会读到新版本。
+校验并完成真机测试后，提交源码到 GitHub。自动发布成功后，手机订阅才会读取到新版本。
 
 ## 5. 常见规则字段
 
 - `id`：Android 包名，例如 `com.zhihu.android`。
 - `name`：App 名。
 - `groups`：规则组列表。
-- `key`：同一个 App 内唯一编号，从 0 开始。
+- 规则组 `key`：同一 App 内唯一且应保持稳定；规则 `key` 在同一规则组内唯一。
 - `name`：规则组名称，建议写清楚场景。
 - `rules`：真正的匹配规则。
 - `matches`：选择器，决定匹配哪个节点。
